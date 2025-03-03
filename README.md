@@ -6,7 +6,7 @@ Probably a networking or multimedia app or something.
 
 
 ## Dependencies
-You need at least **[Java 23]()** up and running.
+You need at least **[Java 23](https://adoptium.net/temurin/releases/?version=23)** up and running.
 
 
 ## Installation guide
