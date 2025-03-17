@@ -10,6 +10,7 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
@@ -35,7 +36,7 @@
           </Menu>
         </menus>
       </MenuBar>
-      <SplitPane dividerPositions="0.11195652173913044" VBox.vgrow="ALWAYS">
+      <SplitPane dividerPositions="0.16948784722222218" VBox.vgrow="ALWAYS">
         <items>
             <VBox prefHeight="200.0" prefWidth="100.0">
                <children>
@@ -49,7 +50,7 @@
                      </rowConstraints>
                      <children>
                         <Label text="Zoom" />
-                        <Slider fx:id="zoomSlider" blockIncrement="0.1" max="5.0" min="1.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0" GridPane.rowIndex="1" />
+                        <Slider fx:id="zoomSlider" blockIncrement="0.1" majorTickUnit="5.0" max="5.0" min="1.0" minorTickCount="10" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0" GridPane.rowIndex="1" />
                      </children>
                   </GridPane>
                   <GridPane>
@@ -61,8 +62,12 @@
                         <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                      </rowConstraints>
                      <children>
-                        <Label text="Brush size" />
-                        <Slider fx:id="brushSizeSlider" GridPane.rowIndex="1" />
+                        <Label fx:id="brushSizeLabel" text="1">
+                           <graphic>
+                              <Label text="Brush Size :" />
+                           </graphic>
+                        </Label>
+                        <Slider fx:id="brushSizeSlider" blockIncrement="1.0" majorTickUnit="5.0" max="10.0" minorTickCount="9" showTickLabels="true" showTickMarks="true" snapToTicks="true" GridPane.rowIndex="1" />
                      </children>
                   </GridPane>
                </children></VBox>
@@ -76,9 +81,13 @@
                 <RowConstraints vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <ScrollPane fx:id="scrollPane" hbarPolicy="ALWAYS" style="-fx-background-color: #666666; -fx-background: #666666;" vbarPolicy="ALWAYS" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+                  <ScrollPane fx:id="scrollPane" cache="true" cacheHint="QUALITY" depthTest="ENABLE" hbarPolicy="ALWAYS" style="-fx-background-color: #666666; -fx-background: #666666;" vbarPolicy="ALWAYS" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
                      <content>
-                        <Canvas fx:id="drawingCanvas" height="600.0" nodeOrientation="INHERIT" width="800.0" />
+                        <Pane fx:id="pane">
+                           <children>
+                              <Canvas fx:id="drawingCanvas" height="600.0" nodeOrientation="INHERIT" width="800.0" />
+                           </children>
+                        </Pane>
                      </content>
                   </ScrollPane>
                </children>
