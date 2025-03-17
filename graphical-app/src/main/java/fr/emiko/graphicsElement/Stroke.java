@@ -2,6 +2,8 @@ package fr.emiko.graphicsElement;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.shape.Path;
+import javafx.scene.shape.StrokeLineCap;
+import javafx.scene.shape.StrokeLineJoin;
 
 import java.awt.*;
 
@@ -19,17 +21,17 @@ public class Stroke {
     }
 
     public void draw (GraphicsContext g) {
-//        g.setStroke(javafx.scene.paint.Color.BLACK);
-//        g.setLineWidth(1);
-//        g.beginPath();
-//        g.moveTo(fromX, fromY);
-//        g.lineTo(toX, toY);
-//        g.closePath();
-//        g.stroke();
-//        g.fill();
-
-        g.setFill(javafx.scene.paint.Color.BLACK);
-        g.fillOval(toX-5, toY-5, 10, 10);
+        g.setStroke(javafx.scene.paint.Color.BLACK);
+        g.setLineCap(StrokeLineCap.ROUND);
+        g.setMiterLimit(1);
+        g.setLineWidth(10);
+        g.setLineJoin(StrokeLineJoin.ROUND);
+        g.beginPath();
+        g.moveTo(fromX, fromY);
+        g.lineTo(toX, toY);
+        g.closePath();
+        g.stroke();
+        g.fill();
     }
 
     @Override
