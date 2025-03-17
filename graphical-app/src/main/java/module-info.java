@@ -3,6 +3,7 @@ module fr.emiko.graphicalapp {
     requires javafx.fxml;
     requires java.desktop;
     requires org.controlsfx.controls;
+    requires net.synedra.validatorfx;
 
 
     opens fr.emiko.graphicalapp to javafx.fxml;

@@ -2,7 +2,10 @@ package fr.emiko.graphicalapp;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.canvas.GraphicsContext;
@@ -15,7 +18,10 @@ import javafx.scene.paint.Color;
 import fr.emiko.graphicsElement.Stroke;
 import javafx.scene.robot.Robot;
 import javafx.scene.transform.Scale;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.Vector;
@@ -32,14 +38,14 @@ public class HelloController implements Initializable {
     public Pane pane;
     private double posX = 0;
     private double posY = 0;
+    private double mouseX = 0;
+    private double mouseY = 0;
     private Vector<Stroke> strokes = new Vector<>();
-    private Vector<Stroke> lastSaved = new Vector<>();
+    private Vector<Vector<Stroke>> lastSaved = new Vector<>();
     private Vector<Vector<Stroke>> lines = new Vector<>();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        drawingCanvas.setOnMouseDragged(this::printLine);
-        drawingCanvas.setOnMouseClicked(this::resetPos);
         saveButton.setOnAction(this::onActionSave);
         loadButton.setOnAction(this::onActionLoad);
         newCanvasButton.setOnAction(this::onActionCreateCanvas);
@@ -49,6 +55,7 @@ public class HelloController implements Initializable {
         setupCanvas();
         scrollPane.prefViewportHeightProperty().bind(pane.layoutYProperty());
         scrollPane.prefViewportWidthProperty().bind(pane.layoutXProperty());
+
     }
 
     private void setupCanvas() {
@@ -58,6 +65,8 @@ public class HelloController implements Initializable {
         brushSizeSlider.setValue(1);
         drawingCanvas.setTranslateX(scrollPane.getWidth()/2);
         drawingCanvas.setTranslateY(scrollPane.getHeight()/2);
+        drawingCanvas.setOnMouseDragged(this::printLine);
+        drawingCanvas.setOnMouseClicked(this::resetPos);
         scrollPane.addEventFilter(ScrollEvent.ANY, new EventHandler<ScrollEvent>() {
             @Override
             public void handle(ScrollEvent event) {
@@ -78,7 +87,7 @@ public class HelloController implements Initializable {
             for (Vector<Stroke> strokeVector : lines) {
                 for (Stroke stroke: strokeVector) {
                     stroke.draw(gc);
-                    System.out.println(stroke);
+                    //System.out.println(stroke);
                 }
             }
         }
@@ -106,37 +115,75 @@ public class HelloController implements Initializable {
             newScale.setPivotY(drawingCanvas.getScaleY());
             drawingCanvas.getTransforms().add(newScale);
 
-
-            System.out.println(pane.getHeight());
-            System.out.println(pane.getWidth());
             pane.setPrefHeight(pane.getHeight()*scaleFactor);
             pane.setPrefWidth(pane.getWidth()*scaleFactor);
         }
     }
 
     private void onActionCreateCanvas(ActionEvent actionEvent) {
+        try {
+            NewCanvasController controller = showNewStage("New canvas...", "new-canvas-view.fxml");
+
+            if (controller.isOk()) {
+                //drawingCanvas = new Canvas(controller.getCanvasWidth(), controller.getCanvasHeight());
+                //setupCanvas();
+                System.out.println(controller.getCanvasHeight());
+                System.out.println(controller.getCanvasWidth());
+                drawingCanvas.setWidth(controller.getCanvasWidth());
+                drawingCanvas.setHeight(controller.getCanvasHeight());
+                drawingCanvas.getGraphicsContext2D().setFill(Color.WHITE);
+                drawingCanvas.getGraphicsContext2D().fillRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+                drawingCanvas.getGraphicsContext2D().fill();
+                pane.setScaleX(1);
+                pane.setScaleY(1);
+                System.out.println("New canvas created");
+            }
+        } catch (IOException ignored) {
+        }
+
+    }
+
+    public <T> T showNewStage(String title, String fxmlFileName) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(fxmlFileName));
+        Scene scene = new Scene(fxmlLoader.load());
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setTitle(title);
+        stage.setResizable(false);
+        stage.setScene(scene);
+        stage.showAndWait();
+        return fxmlLoader.getController();
     }
 
     private void onActionLoad(ActionEvent actionEvent) {
 //        drawingCanvas.getGraphicsContext2D().drawImage(lastSaved, 0, 0);
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
-        for (Stroke stroke : lastSaved) {
-            stroke.draw(gc);
+        gc.setFill(Color.WHITE);
+        gc.fillRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+        System.out.println(lastSaved.size());
+        for (Vector<Stroke> strokeVector : lastSaved) {
+            for (Stroke stroke: strokeVector) {
+                stroke.draw(gc);
+                System.out.println(stroke);
+            }
         }
         strokes = (Vector<Stroke>) lastSaved.clone();
     }
 
     private void onActionSave(ActionEvent actionEvent) {
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-        lastSaved = (Vector<Stroke>) strokes.clone();
-        
+        lastSaved = (Vector<Vector<Stroke>>) lines.clone();
+        System.out.println(lastSaved.size());
     }
 
     private void resetPos(MouseEvent mouseEvent) {
         posX = 0;
         posY = 0;
+        mouseX = 0;
+        mouseY = 0;
         lines.add((Vector<Stroke>) strokes.clone());
+        System.out.println(lines.size());
         System.out.println(lines);
         strokes.clear();
     }
