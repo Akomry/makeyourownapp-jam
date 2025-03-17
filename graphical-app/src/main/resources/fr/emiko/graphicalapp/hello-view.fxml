@@ -1,16 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<?import javafx.scene.control.Button?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="fr.emiko.graphicalapp.HelloController">
-  <padding>
-    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-  </padding>
-
-  <Label fx:id="welcomeText"/>
-  <Button text="Hello!" onAction="#onHelloButtonClick"/>
+<VBox alignment="CENTER" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fr.emiko.graphicalapp.HelloController">
+   <children>
+      <MenuBar VBox.vgrow="NEVER">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem fx:id="newCanvasButton" mnemonicParsing="false" text="New canvas" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Edit">
+            <items>
+              <MenuItem fx:id="saveButton" mnemonicParsing="false" text="Save" />
+                  <MenuItem fx:id="loadButton" mnemonicParsing="false" text="Load" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <SplitPane dividerPositions="0.11195652173913044" VBox.vgrow="ALWAYS">
+        <items>
+            <VBox prefHeight="200.0" prefWidth="100.0" />
+            <GridPane>
+              <columnConstraints>
+                <ColumnConstraints hgrow="ALWAYS" />
+                <ColumnConstraints hgrow="SOMETIMES" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints vgrow="ALWAYS" />
+                <RowConstraints vgrow="SOMETIMES" />
+              </rowConstraints>
+               <children>
+                  <ScrollPane hbarPolicy="ALWAYS" style="-fx-background-color: #666666; -fx-background: #666666;" vbarPolicy="ALWAYS" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+                     <content>
+                        <Canvas fx:id="drawingCanvas" height="600.0" nodeOrientation="INHERIT" width="800.0" />
+                     </content>
+                  </ScrollPane>
+               </children>
+            </GridPane>
+        </items>
+      </SplitPane>
+   </children>
 </VBox>
