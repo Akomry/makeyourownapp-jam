@@ -9,10 +9,14 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Slider;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
+import javafx.scene.input.ZoomEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import fr.emiko.graphicsElement.Stroke;
@@ -27,6 +31,9 @@ public class HelloController implements Initializable {
     public MenuItem saveButton;
     public MenuItem loadButton;
     public MenuItem newCanvasButton;
+    public Slider brushSizeSlider;
+    public Slider zoomSlider;
+    public ScrollPane scrollPane;
     private double posX = 0;
     private double posY = 0;
     private Vector<Stroke> strokes = new Vector<>();
@@ -39,7 +46,27 @@ public class HelloController implements Initializable {
         saveButton.setOnAction(this::onActionSave);
         loadButton.setOnAction(this::onActionLoad);
         newCanvasButton.setOnAction(this::onActionCreateCanvas);
+        scrollPane.setOnScroll(this::onScrollZoom);
     }
+
+    private void onScrollZoom(ScrollEvent event) {
+        event.consume();
+        double SCALE_DELTA = 1.1;
+        if (event.getDeltaY() == 0) {
+            return;
+        }
+        if (event.isControlDown()) {
+            double scaleFactor =
+                    (event.getDeltaY() > 0) ? SCALE_DELTA : 1 / SCALE_DELTA;
+
+            drawingCanvas.setScaleX(drawingCanvas.getScaleX() * scaleFactor);
+            drawingCanvas.setScaleY(drawingCanvas.getScaleY() * scaleFactor);
+            scrollPane.setFitToHeight(true);
+            scrollPane.setFitToWidth(true);
+
+        }
+    }
+
 
     private void onActionCreateCanvas(ActionEvent actionEvent) {
     }
