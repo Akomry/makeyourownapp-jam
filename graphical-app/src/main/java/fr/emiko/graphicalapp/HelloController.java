@@ -50,7 +50,7 @@ public class HelloController implements Initializable {
         loadButton.setOnAction(this::onActionLoad);
         newCanvasButton.setOnAction(this::onActionCreateCanvas);
         scrollPane.setOnScroll(this::onScrollZoom);
-        scrollPane.getParent().setOnKeyPressed(this::onActionKeyPressed);
+        scrollPane.setOnKeyPressed(this::onActionKeyPressed);
         brushSizeLabel.textProperty().bind(brushSizeSlider.valueProperty().asString());
         setupCanvas();
         scrollPane.prefViewportHeightProperty().bind(pane.layoutYProperty());

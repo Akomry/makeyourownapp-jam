@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
@@ -70,28 +71,29 @@
                         <Slider fx:id="brushSizeSlider" blockIncrement="1.0" majorTickUnit="5.0" max="10.0" minorTickCount="9" showTickLabels="true" showTickMarks="true" snapToTicks="true" GridPane.rowIndex="1" />
                      </children>
                   </GridPane>
-               </children></VBox>
-            <GridPane>
-              <columnConstraints>
-                <ColumnConstraints hgrow="ALWAYS" />
-                <ColumnConstraints hgrow="SOMETIMES" />
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints vgrow="ALWAYS" />
-                <RowConstraints vgrow="SOMETIMES" />
-              </rowConstraints>
-               <children>
-                  <ScrollPane fx:id="scrollPane" cache="true" cacheHint="QUALITY" depthTest="ENABLE" hbarPolicy="ALWAYS" style="-fx-background-color: #666666; -fx-background: #666666;" vbarPolicy="ALWAYS" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
-                     <content>
+               </children>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding></VBox>
+            <ScrollPane fx:id="scrollPane" cache="true" cacheHint="QUALITY" depthTest="ENABLE" hbarPolicy="ALWAYS" style="-fx-background-color: #666666; -fx-background: #666666;" vbarPolicy="ALWAYS">
+               <content>
+                  <GridPane>
+                     <columnConstraints>
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints minHeight="10.0" valignment="CENTER" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                     <children>
                         <Pane fx:id="pane">
                            <children>
-                              <Canvas fx:id="drawingCanvas" height="600.0" nodeOrientation="INHERIT" width="800.0" />
+                              <Canvas fx:id="drawingCanvas" height="600.0" nodeOrientation="INHERIT" translateX="10.0" translateY="10.0" width="800.0" />
                            </children>
                         </Pane>
-                     </content>
-                  </ScrollPane>
-               </children>
-            </GridPane>
+                     </children>
+                  </GridPane>
+               </content>
+            </ScrollPane>
         </items>
       </SplitPane>
    </children>

@@ -27,11 +27,11 @@ public class NewCanvasController implements Initializable {
         createButton.setOnAction(this::create);
         createButton.disableProperty().bind(validator.containsErrorsProperty());
         cancelButton.setOnAction(this::close);
-
+        widthTextField.setOnAction(this::create);
         validator.createCheck()
                 .decorates(createButton)
-                .dependsOn("width", heightTextField.textProperty())
-                .dependsOn("height", widthTextField.textProperty())
+                .dependsOn("width", widthTextField.textProperty())
+                .dependsOn("height", heightTextField.textProperty())
                 .withMethod(this::checkWidthHeight)
                 .immediate();
     }
