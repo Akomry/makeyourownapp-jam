@@ -1,5 +1,13 @@
 package fr.emiko.graphicalapp;
 
+import fr.emiko.graphicsElement.Line;
+import fr.emiko.net.DrawClient;
+import fr.emiko.net.DrawServer;
+import fr.emiko.net.Event;
+import fr.emiko.net.User;
+import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -7,26 +15,32 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Slider;
+import javafx.scene.effect.BoxBlur;
 import javafx.scene.input.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
 import fr.emiko.graphicsElement.Stroke;
 import javafx.scene.robot.Robot;
 import javafx.scene.transform.Scale;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.json.JSONObject;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
-import java.util.ResourceBundle;
-import java.util.Vector;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HelloController implements Initializable {
+    private final Pattern hostPortPattern = Pattern.compile("^([-.a-zA-Z0-9]+)(?::([0-9]{1,5}))?$");
     public Canvas drawingCanvas;
     public MenuItem saveButton;
     public MenuItem loadButton;
@@ -36,13 +50,30 @@ public class HelloController implements Initializable {
     public ScrollPane scrollPane;
     public Label brushSizeLabel;
     public Pane pane;
+    public MenuItem hostButton;
+    public MenuItem joinButton;
+    public MenuItem disconnectButton;
+    public SplitPane mainPane;
+    public MenuItem stopHostButton;
+    public ColorPicker colorPicker;
+    public ListView layerListView;
+    public Button addLayerButton;
+    public Button removeLayerButton;
     private double posX = 0;
     private double posY = 0;
     private double mouseX = 0;
     private double mouseY = 0;
     private Vector<Stroke> strokes = new Vector<>();
-    private Vector<Vector<Stroke>> lastSaved = new Vector<>();
-    private Vector<Vector<Stroke>> lines = new Vector<>();
+    private Vector<Line> lastSaved = new Vector<>();
+    private Vector<Line> lines = new Vector<>();
+    private User user;
+    private boolean connected;
+    private DrawClient client;
+    private ToggleButton hostButtonToggle = new ToggleButton();
+    private DrawServer server;
+    private Canvas currentLayer;
+    private ObservableList<Canvas> layerObservableList = FXCollections.observableArrayList();
+
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -56,6 +87,111 @@ public class HelloController implements Initializable {
         scrollPane.prefViewportHeightProperty().bind(pane.layoutYProperty());
         scrollPane.prefViewportWidthProperty().bind(pane.layoutXProperty());
 
+        stopHostButton.setOnAction(this::onActionStopHost);
+        hostButton.setOnAction(this::onActionHost);
+        joinButton.setOnAction(this::onActionJoin);
+        disconnectButton.setOnAction(this::onActionDisconnect);
+
+        stopHostButton.disableProperty().bind(hostButtonToggle.selectedProperty().not());
+        disconnectButton.disableProperty().bind(hostButtonToggle.selectedProperty().not());
+        hostButtonToggle.setSelected(false);
+        mainPane.disableProperty().bind(hostButtonToggle.selectedProperty().not());
+
+        layerListView.setItems(layerObservableList);
+    }
+
+    private void onActionStopHost(ActionEvent actionEvent) {
+        client.close();
+        if (this.server != null) {
+            try {
+                server.close();
+            } catch (IOException e) {
+                showErrorDialog(e, "Could not close server instance");
+            }
+        }
+    }
+
+    private void onActionDisconnect(ActionEvent actionEvent) {
+        client.close();
+    }
+
+
+    private void onActionJoin(ActionEvent actionEvent) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Join");
+        dialog.setHeaderText(null);
+        dialog.setContentText("Enter distant address");
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            try {
+                Matcher matcher = hostPortPattern.matcher(result.get());
+                matcher.matches();
+                String host = matcher.group(1);
+                String port = matcher.group(2);
+                connectClient(host, port == null ? 8090 : Integer.parseInt(port));
+            } catch (NumberFormatException e) {
+                showErrorDialog(e, "Invalid distant address");
+            } catch (IOException e) {
+                showErrorDialog(e, "Could not connect to host");
+            }
+        }
+    }
+
+    private void onActionHost(ActionEvent actionEvent) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Host");
+        dialog.setContentText("Which port do you want to use? (default: 8090)");
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+
+            try {
+                server = new DrawServer(result.get().isEmpty() ? 8090 : Integer.parseInt(result.get()));
+                Thread thread = new Thread(server::acceptClients);
+                thread.setDaemon(true);
+                thread.start();
+                connectClient("localhost", result.get().isEmpty() ? 8090 : Integer.parseInt(result.get()));
+            } catch (NumberFormatException | IOException e) {
+                showErrorDialog(e, "Invalid port number");
+            }
+        }
+    }
+
+    private void connectClient(String host, int port) throws IOException {
+        this.client = new DrawClient(host, port, this);
+        hostButtonToggle.setSelected(true);
+        client.sendAuthEvent(String.valueOf(new Random().nextInt()));
+    }
+
+    private void showErrorDialog(Exception ex, String context) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("An error occured!");
+        alert.setHeaderText(null);
+        alert.setContentText(context);
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        ex.printStackTrace(pw);
+        String exceptionText = sw.toString();
+
+        Label label = new Label("The exception stacktrace was:");
+
+        TextArea textArea = new TextArea(exceptionText);
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+        GridPane expContent = new GridPane();
+        expContent.setMaxWidth(Double.MAX_VALUE);
+        expContent.add(label, 0, 0);
+        expContent.add(textArea, 0, 1);
+
+        alert.getDialogPane().setExpandableContent(expContent);
+
+        alert.showAndWait();
     }
 
     private void setupCanvas() {
@@ -73,6 +209,11 @@ public class HelloController implements Initializable {
                 onScrollZoom(event);
                 event.consume();
             }});
+        BoxBlur blur = new BoxBlur();
+        blur.setHeight(1);
+        blur.setWidth(1);
+        blur.setIterations(1);
+        drawingCanvas.getGraphicsContext2D().setEffect(blur);
     }
 
     private void onActionKeyPressed(KeyEvent keyEvent) {
@@ -86,7 +227,7 @@ public class HelloController implements Initializable {
             gc.fillRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
             for (Vector<Stroke> strokeVector : lines) {
                 for (Stroke stroke: strokeVector) {
-                    stroke.draw(gc);
+                    stroke.draw(gc, stroke.getColor());
                     //System.out.println(stroke);
                 }
             }
@@ -164,7 +305,7 @@ public class HelloController implements Initializable {
         System.out.println(lastSaved.size());
         for (Vector<Stroke> strokeVector : lastSaved) {
             for (Stroke stroke: strokeVector) {
-                stroke.draw(gc);
+                stroke.draw(gc, colorPicker.getValue());
                 System.out.println(stroke);
             }
         }
@@ -173,7 +314,7 @@ public class HelloController implements Initializable {
 
     private void onActionSave(ActionEvent actionEvent) {
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-        lastSaved = (Vector<Vector<Stroke>>) lines.clone();
+        lastSaved = (Vector<Line>) lines.clone();
         System.out.println(lastSaved.size());
     }
 
@@ -182,10 +323,17 @@ public class HelloController implements Initializable {
         posY = 0;
         mouseX = 0;
         mouseY = 0;
-        lines.add((Vector<Stroke>) strokes.clone());
+        Line line = new Line();
+        for (Stroke stroke: strokes) {
+            line.add(stroke);
+        }
+        lines.add((Line) line.clone());
         System.out.println(lines.size());
         System.out.println(lines);
+        System.out.println(new Event("ADDLINE", line.toJSONObject()));
         strokes.clear();
+
+        client.sendEvent(new Event(Event.ADDLINE, line.toJSONObject()));
     }
 
     private void printLine(MouseEvent mouseEvent) {
@@ -197,15 +345,74 @@ public class HelloController implements Initializable {
                 posY = mouseEvent.getY();
             }
 
-            Stroke stroke = new Stroke(posX, posY, mouseEvent.getX(), mouseEvent.getY(), brushSizeSlider.getValue());
+            Stroke stroke = new Stroke(posX, posY, mouseEvent.getX(), mouseEvent.getY(), brushSizeSlider.getValue(), colorPicker.getValue());
             strokes.add(stroke);
-            stroke.draw(gc);
+            stroke.draw(gc, colorPicker.getValue());
 
             posX = mouseEvent.getX();
             posY = mouseEvent.getY();
+
+
         } else if (mouseEvent.isSecondaryButtonDown()) {
 
         }
     }
 
+    public void handleEvent(Event event) {
+        System.out.println("Received new event !:" + event.toJSON());
+        String type = event.getType();
+        switch (type) {
+            case Event.LINE -> {
+                doImportLine(event.getContent());
+            }
+            case Event.DELLINE -> {
+                doDeleteLine(event.getContent());
+            }
+            default -> {}
+        }
+    }
+
+    private void doDeleteLine(JSONObject content) {
+        lines.remove(Line.fromJSONArray(content.getJSONArray("line")));
+
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        lines.sort(new Comparator<Line>() {
+            @Override
+            public int compare(Line o1, Line o2) {
+                if (o1.getTimestamp() < o2.getTimestamp()) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+        for (Line line: lines) {
+            for (Stroke stroke: line) {
+                stroke.draw(gc, colorPicker.getValue());
+            }
+        }
+
+    }
+
+    private void doImportLine(JSONObject content) {
+        Line importedLine = Line.fromJSONArray(content.getJSONArray("line"));
+        this.lines.add(importedLine);
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+        lines.sort(new Comparator<Line>() {
+            @Override
+            public int compare(Line o1, Line o2) {
+                if (o1.getTimestamp() < o2.getTimestamp()) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+        for (Line line: lines) {
+            for (Stroke stroke: line) {
+                stroke.draw(gc, colorPicker.getValue());
+            }
+        }
+    }
 }
