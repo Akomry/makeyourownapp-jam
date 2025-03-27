@@ -50,23 +50,10 @@
             </Menu>
          </menus>
       </MenuBar>
-      <SplitPane fx:id="mainPane" dividerPositions="0.16948784722222218">
+      <SplitPane fx:id="mainPane" dividerPositions="0.16948784722222218" VBox.vgrow="ALWAYS">
          <items>
-            <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+            <VBox spacing="10.0">
                <children>
-                  <GridPane>
-                     <columnConstraints>
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-                     </columnConstraints>
-                     <rowConstraints>
-                        <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                        <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                     </rowConstraints>
-                     <children>
-                        <Label text="Zoom" />
-                        <Slider fx:id="zoomSlider" blockIncrement="0.1" majorTickUnit="5.0" max="5.0" min="1.0" minorTickCount="10" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0" GridPane.rowIndex="1" />
-                     </children>
-                  </GridPane>
                   <GridPane>
                      <columnConstraints>
                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
@@ -117,7 +104,7 @@
                      <children>
                         <Pane fx:id="pane">
                            <children>
-                              <Canvas fx:id="drawingCanvas" height="600.0" nodeOrientation="INHERIT" translateX="10.0" translateY="10.0" width="800.0" />
+                              <Canvas fx:id="drawingCanvas" height="1.0" nodeOrientation="INHERIT" translateX="10.0" translateY="10.0" width="1.0" />
                            </children>
                         </Pane>
                      </children>
@@ -129,7 +116,7 @@
       <HBox>
          <children>
             <Label text="Status : " />
-            <Label text="Connected to username@localhost:8090" />
+            <Label text="Disconnected" />
          </children>
          <VBox.margin>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

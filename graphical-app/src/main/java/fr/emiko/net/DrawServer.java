@@ -17,6 +17,8 @@ public class DrawServer {
     private ServerSocket passiveSocket;
     private Vector<DrawClientHandler> clientList = new Vector<DrawClientHandler>();
     private Vector<Line> lines;
+    private double canvasWidth;
+    private double canvasHeight;
     public DrawServer(int port) throws IOException {
         passiveSocket = new ServerSocket(port);
     }
@@ -158,14 +160,24 @@ public class DrawServer {
                     doDelLine(event.getContent());
                     return true;
                 }
-                case Event.LSTLINE -> {
+                case Event.LINELST -> {
                     doSendLines();
+                    return true;
+                }
+                case Event.ADDCANVAS -> {
+                    doAddCanvas(event.getContent());
                     return true;
                 }
                 default -> {
                     return false;
                 }
             }
+        }
+
+        private void doAddCanvas(JSONObject content) throws JSONException {
+            canvasWidth = content.getDouble("width");
+            canvasHeight = content.getDouble("height");
+            sendAllOtherUsers(new Event(Event.CNVS, content));
         }
 
         private void doDelLine(JSONObject content) {
@@ -189,9 +201,11 @@ public class DrawServer {
         }
 
         private void sendAllOtherUsers(Event event) {
+            System.out.println("current user: " + this.user.getUsername());
             for (DrawClientHandler client : clientList) {
+                System.out.println("calculating user: " + client.user.getUsername());
                 if (client.user != this.user) {
-                    System.out.println(client.user.getUsername());
+                    System.out.println("found user: " + client.user.getUsername());
                     sendEvent(client, event);
                 }
             }
@@ -203,6 +217,12 @@ public class DrawServer {
         }
 
         private void doSendLines() {
+            out.println(
+                    new Event("CNVS", new JSONObject()
+                                    .put("width", canvasWidth)
+                                    .put("height", canvasHeight))
+            );
+
             Vector<Line> lines = new Vector<>();
             for (DrawClientHandler client: clientList) {
                 for (Line line: client.user.getLines()) {
@@ -210,7 +230,7 @@ public class DrawServer {
                 }
             }
             for (Line line: lines) {
-                out.println(new Event("LINELST", line.toJSONObject()));
+                out.println(new Event("LINE", line.toJSONObject()));
             }
         }
 

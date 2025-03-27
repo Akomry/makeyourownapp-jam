@@ -35,7 +35,7 @@ public class Stroke {
                 jsonObject.getDouble("toX"),
                 jsonObject.getDouble("toY"),
                 jsonObject.getDouble("brushSize"),
-                (Color) jsonObject.get("color")
+                Color.valueOf(jsonObject.get("color").toString())
         );
     }
 

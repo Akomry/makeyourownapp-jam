@@ -1,6 +1,7 @@
 package fr.emiko.graphicalapp;
 
 import fr.emiko.graphicsElement.Line;
+import fr.emiko.graphicsElement.layerListViewCell;
 import fr.emiko.net.DrawClient;
 import fr.emiko.net.DrawServer;
 import fr.emiko.net.Event;
@@ -46,7 +47,6 @@ public class HelloController implements Initializable {
     public MenuItem loadButton;
     public MenuItem newCanvasButton;
     public Slider brushSizeSlider;
-    public Slider zoomSlider;
     public ScrollPane scrollPane;
     public Label brushSizeLabel;
     public Pane pane;
@@ -56,7 +56,7 @@ public class HelloController implements Initializable {
     public SplitPane mainPane;
     public MenuItem stopHostButton;
     public ColorPicker colorPicker;
-    public ListView layerListView;
+    public ListView<Canvas> layerListView;
     public Button addLayerButton;
     public Button removeLayerButton;
     private double posX = 0;
@@ -71,7 +71,6 @@ public class HelloController implements Initializable {
     private DrawClient client;
     private ToggleButton hostButtonToggle = new ToggleButton();
     private DrawServer server;
-    private Canvas currentLayer;
     private ObservableList<Canvas> layerObservableList = FXCollections.observableArrayList();
 
 
@@ -83,7 +82,7 @@ public class HelloController implements Initializable {
         scrollPane.setOnScroll(this::onScrollZoom);
         scrollPane.setOnKeyPressed(this::onActionKeyPressed);
         brushSizeLabel.textProperty().bind(brushSizeSlider.valueProperty().asString());
-        setupCanvas();
+        setupCanvas(drawingCanvas);
         scrollPane.prefViewportHeightProperty().bind(pane.layoutYProperty());
         scrollPane.prefViewportWidthProperty().bind(pane.layoutXProperty());
 
@@ -92,12 +91,42 @@ public class HelloController implements Initializable {
         joinButton.setOnAction(this::onActionJoin);
         disconnectButton.setOnAction(this::onActionDisconnect);
 
+        newCanvasButton.disableProperty().bind(hostButtonToggle.selectedProperty().not());
         stopHostButton.disableProperty().bind(hostButtonToggle.selectedProperty().not());
         disconnectButton.disableProperty().bind(hostButtonToggle.selectedProperty().not());
         hostButtonToggle.setSelected(false);
         mainPane.disableProperty().bind(hostButtonToggle.selectedProperty().not());
 
+        layerListView.setCellFactory(layerListView -> new layerListViewCell());
         layerListView.setItems(layerObservableList);
+        layerListView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        //addLayerButton.setOnAction(this::onActionAddLayer);
+        //removeLayerButton.setOnAction(this::onActionRemoveLayer);
+        //layerListView.setOnMouseClicked(this::onActionSelectCanvas);
+    }
+
+    private void onActionSelectCanvas(MouseEvent mouseEvent) {
+        layerListView.getSelectionModel().getSelectedItem().requestFocus();
+        layerListView.getSelectionModel().getSelectedItem().toFront();
+    }
+
+    private void onActionRemoveLayer(ActionEvent actionEvent) {
+        pane.getChildren().remove(layerListView.getSelectionModel().getSelectedItem());
+        layerObservableList.remove(layerListView.getSelectionModel().getSelectedItem());
+        layerListView.refresh();
+        layerListView.getSelectionModel().select(layerObservableList.getFirst());
+    }
+
+    private void onActionAddLayer(ActionEvent actionEvent) {
+        Canvas newLayer = new Canvas(
+                layerListView.getSelectionModel().getSelectedItem().getWidth(),
+                layerListView.getSelectionModel().getSelectedItem().getHeight()
+        );
+        pane.getChildren().add(newLayer);
+        layerObservableList.addFirst(newLayer);
+        layerListView.getSelectionModel().select(newLayer);
+        setupCanvas(newLayer);
+        layerListView.refresh();
     }
 
     private void onActionStopHost(ActionEvent actionEvent) {
@@ -109,10 +138,12 @@ public class HelloController implements Initializable {
                 showErrorDialog(e, "Could not close server instance");
             }
         }
+        hostButtonToggle.setSelected(false);
     }
 
     private void onActionDisconnect(ActionEvent actionEvent) {
         client.close();
+        hostButtonToggle.setSelected(false);
     }
 
 
@@ -129,6 +160,7 @@ public class HelloController implements Initializable {
                 String host = matcher.group(1);
                 String port = matcher.group(2);
                 connectClient(host, port == null ? 8090 : Integer.parseInt(port));
+                client.sendEvent(new Event(Event.LINELST, new JSONObject()));
             } catch (NumberFormatException e) {
                 showErrorDialog(e, "Invalid distant address");
             } catch (IOException e) {
@@ -194,15 +226,20 @@ public class HelloController implements Initializable {
         alert.showAndWait();
     }
 
-    private void setupCanvas() {
-        drawingCanvas.requestFocus();
-        drawingCanvas.getGraphicsContext2D().setFill(Color.WHITE);
-        drawingCanvas.getGraphicsContext2D().fillRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+    private void setupCanvas(Canvas canvas) {
+        canvas.requestFocus();
+        canvas.getGraphicsContext2D().setFill(Color.WHITE);
+        canvas.getGraphicsContext2D().fillRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
         brushSizeSlider.setValue(1);
-        drawingCanvas.setTranslateX(scrollPane.getWidth()/2);
-        drawingCanvas.setTranslateY(scrollPane.getHeight()/2);
-        drawingCanvas.setOnMouseDragged(this::printLine);
-        drawingCanvas.setOnMouseClicked(this::resetPos);
+//        canvas.setTranslateX(scrollPane.getWidth()/2);
+//        canvas.setTranslateY(scrollPane.getHeight()/2);
+        colorPicker.setValue(Color.BLACK);
+        canvas.setOnMouseDragged(this::printLine);
+        canvas.setOnMouseClicked(this::resetPos);
+
+        layerListView.getSelectionModel().select(drawingCanvas);
+        layerObservableList.add(drawingCanvas);
+        layerListView.refresh();
         scrollPane.addEventFilter(ScrollEvent.ANY, new EventHandler<ScrollEvent>() {
             @Override
             public void handle(ScrollEvent event) {
@@ -221,10 +258,14 @@ public class HelloController implements Initializable {
         if (keyEvent.isControlDown() && keyEvent.getCode().equals(KeyCode.Z)) {
             System.out.println("CTRL Z");
             System.out.println(lines);
+            System.out.println(lines);
             lines.remove(lines.lastElement());
-            GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+            Canvas currentLayer = layerListView.getSelectionModel().getSelectedItem();
+            GraphicsContext gc = currentLayer.getGraphicsContext2D();
             gc.setFill(Color.WHITE);
-            gc.fillRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+            gc.fillRect(0, 0, currentLayer.getWidth(), currentLayer.getHeight());
+            gc.clearRect(0, 0, currentLayer.getWidth(), currentLayer.getHeight());
+            gc.fill();
             for (Vector<Stroke> strokeVector : lines) {
                 for (Stroke stroke: strokeVector) {
                     stroke.draw(gc, stroke.getColor());
@@ -277,6 +318,7 @@ public class HelloController implements Initializable {
                 drawingCanvas.getGraphicsContext2D().fill();
                 pane.setScaleX(1);
                 pane.setScaleY(1);
+                client.sendEvent(new Event(Event.ADDCANVAS, new JSONObject().put("width", drawingCanvas.getWidth()).put("height", drawingCanvas.getHeight())));
                 System.out.println("New canvas created");
             }
         } catch (IOException ignored) {
@@ -337,8 +379,9 @@ public class HelloController implements Initializable {
     }
 
     private void printLine(MouseEvent mouseEvent) {
+        Canvas currentLayer = layerListView.getSelectionModel().getSelectedItem();
         if (mouseEvent.isPrimaryButtonDown()) {
-            GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+            GraphicsContext gc = currentLayer.getGraphicsContext2D();
 
             if (posX == 0 || posY == 0) {
                 posX = mouseEvent.getX();
@@ -354,7 +397,19 @@ public class HelloController implements Initializable {
 
 
         } else if (mouseEvent.isSecondaryButtonDown()) {
+            GraphicsContext gc = currentLayer.getGraphicsContext2D();
 
+            if (posX == 0 || posY == 0) {
+                posX = mouseEvent.getX();
+                posY = mouseEvent.getY();
+            }
+
+            Stroke stroke = new Stroke(posX, posY, mouseEvent.getX(), mouseEvent.getY(), brushSizeSlider.getValue(), colorPicker.getValue());
+            strokes.add(stroke);
+            stroke.draw(gc, Color.WHITE);
+
+            posX = mouseEvent.getX();
+            posY = mouseEvent.getY();
         }
     }
 
@@ -368,8 +423,23 @@ public class HelloController implements Initializable {
             case Event.DELLINE -> {
                 doDeleteLine(event.getContent());
             }
+            case Event.CNVS -> {
+                doAddCanvas(event.getContent());
+            }
             default -> {}
         }
+    }
+
+    private void doAddCanvas(JSONObject content) {
+        drawingCanvas.setWidth(content.getDouble("width"));
+        drawingCanvas.setHeight(content.getDouble("height"));
+        drawingCanvas.getGraphicsContext2D().setFill(Color.WHITE);
+        drawingCanvas.getGraphicsContext2D().fillRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+        drawingCanvas.getGraphicsContext2D().fill();
+        pane.setScaleX(1);
+        pane.setScaleY(1);
+
+        setupCanvas(drawingCanvas);
     }
 
     private void doDeleteLine(JSONObject content) {
@@ -409,10 +479,8 @@ public class HelloController implements Initializable {
                 }
             }
         });
-        for (Line line: lines) {
-            for (Stroke stroke: line) {
-                stroke.draw(gc, colorPicker.getValue());
-            }
+        for (Stroke stroke: importedLine) {
+            stroke.draw(gc, stroke.getColor());
         }
     }
 }

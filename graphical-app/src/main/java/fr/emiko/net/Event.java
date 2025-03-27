@@ -9,6 +9,8 @@ public class Event {
     public static final String DELLINE = "DELLINE";
     public static final String LINE = "LINE";
     public static final String LINELST = "LINELST";
+    public static final String ADDCANVAS = "ADDCANVAS";
+    public static final String CNVS = "CNVS";
 
     private String type;
     private JSONObject content;

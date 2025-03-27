@@ -3,18 +3,18 @@ package fr.emiko.graphicsElement;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.UUID;
 import java.util.Vector;
 
 public class Line extends Vector<Stroke> {
     private int timestamp;
-    private int layer;
-    private javafx.scene.paint.Color color;
+
     public JSONObject toJSONObject() {
         JSONArray jsonArray = new JSONArray();
         for (Stroke stroke: this) {
             jsonArray.put(stroke.toJSON());
         }
-        return new JSONObject().put("line", jsonArray);
+        return new JSONObject().put("line", jsonArray).put("timestamp", timestamp);
     }
 
     public static Line fromJSONArray(JSONArray jsonArray) {
@@ -31,13 +31,5 @@ public class Line extends Vector<Stroke> {
 
     public void setTimestamp(int timestamp) {
         this.timestamp = timestamp;
-    }
-
-    public int getLayer() {
-        return layer;
-    }
-
-    public void setLayer(int layer) {
-        this.layer = layer;
     }
 }
