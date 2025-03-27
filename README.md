@@ -5,9 +5,15 @@
 
 Basically, this is an online drawing app. It only has the most basic tools for now, pen and eraser with custom color, but I hope to be able to add more.
 
+It's entirely written in JavaFX and uses TCP/IP protocol for communication. Any client is able to host, by default on port 8090. Once you've hosted, you might have to port forward (cf. nat forwarding on your box), but then it's self-hosted: no distant server is required to host!
+
+For now, anyone can join a whiteboard, but i plan to add a basic authentication system.
+
+Then, you can just create a new canvas and start drawing!
+
 
 ## Dependencies
-Probably **[Java 23](https://adoptium.net/temurin/releases/?version=23)** up and running.
+Should be standalone, but it's possible you neew **[Java 23](https://adoptium.net/temurin/releases/?version=23)** up and running.
 
 
 ## Installation guide
