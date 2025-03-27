@@ -371,16 +371,18 @@ public class DrawController implements Initializable {
 
     private void printLine(MouseEvent mouseEvent) {
         Canvas currentLayer = layerListView.getSelectionModel().getSelectedItem();
+
+        GraphicsContext gc = currentLayer.getGraphicsContext2D();
+
+        if (posX == 0 || posY == 0) {
+            posX = mouseEvent.getX();
+            posY = mouseEvent.getY();
+        }
+
+        Stroke stroke = new Stroke(posX, posY, mouseEvent.getX(), mouseEvent.getY(), brushSizeSlider.getValue(), colorPicker.getValue());
+        strokes.add(stroke);
+
         if (mouseEvent.isPrimaryButtonDown()) {
-            GraphicsContext gc = currentLayer.getGraphicsContext2D();
-
-            if (posX == 0 || posY == 0) {
-                posX = mouseEvent.getX();
-                posY = mouseEvent.getY();
-            }
-
-            Stroke stroke = new Stroke(posX, posY, mouseEvent.getX(), mouseEvent.getY(), brushSizeSlider.getValue(), colorPicker.getValue());
-            strokes.add(stroke);
             stroke.draw(gc, colorPicker.getValue());
 
             posX = mouseEvent.getX();
@@ -388,15 +390,6 @@ public class DrawController implements Initializable {
 
 
         } else if (mouseEvent.isSecondaryButtonDown()) {
-            GraphicsContext gc = currentLayer.getGraphicsContext2D();
-
-            if (posX == 0 || posY == 0) {
-                posX = mouseEvent.getX();
-                posY = mouseEvent.getY();
-            }
-
-            Stroke stroke = new Stroke(posX, posY, mouseEvent.getX(), mouseEvent.getY(), brushSizeSlider.getValue(), colorPicker.getValue());
-            strokes.add(stroke);
             stroke.draw(gc, Color.WHITE);
 
             posX = mouseEvent.getX();
@@ -447,11 +440,7 @@ public class DrawController implements Initializable {
         lines.sort(new Comparator<Line>() {
             @Override
             public int compare(Line o1, Line o2) {
-                if (o1.getTimestamp() < o2.getTimestamp()) {
-                    return 1;
-                } else {
-                    return 0;
-                }
+                return Integer.compare(o2.getTimestamp(), o1.getTimestamp());
             }
         });
         for (Line line: lines) {
