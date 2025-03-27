@@ -30,7 +30,7 @@ jobs:
       run: mvn -B package --file pom.xml
 
     - name: Run J-Link
-      run: javafx:jlink -f graphical-app/pom.xml
+      run: mvn javafx:jlink -f graphical-app/pom.xml
   
   build-windows:
     runs-on: windows-latest
