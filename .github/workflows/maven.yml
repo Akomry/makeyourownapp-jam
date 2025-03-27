@@ -37,7 +37,7 @@ jobs:
       with:
         name: linux-app
         path: |
-          /home/runner/work/makeyourownapp-jam/makeyourownapp-jam/graphical-app/target/app.zip
+          /home/runner/work/makeyourownapp-jam/makeyourownapp-jam/graphical-app/target/app
   
   build-windows:
     runs-on: windows-latest
@@ -61,4 +61,4 @@ jobs:
       with:
         name: windows-app
         path: |
-          D:\a\makeyourownapp-jam\makeyourownapp-jam\graphical-app\target\app.zip
+          D:\a\makeyourownapp-jam\makeyourownapp-jam\graphical-app\target\app
