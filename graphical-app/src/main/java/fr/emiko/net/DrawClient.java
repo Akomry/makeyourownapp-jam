@@ -1,15 +1,15 @@
 package fr.emiko.net;
 
-import fr.emiko.graphicalapp.HelloController;
+import fr.emiko.graphicalapp.DrawController;
 import javafx.application.Platform;
 import org.json.JSONObject;
 
 import java.io.IOException;
 
 public class DrawClient extends ClientTCP{
-    private final HelloController listener;
+    private final DrawController listener;
 
-    public DrawClient(String host, int port, HelloController listener) throws IOException {
+    public DrawClient(String host, int port, DrawController listener) throws IOException {
         super(host, port);
         this.listener = listener;
     }

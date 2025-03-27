@@ -6,14 +6,12 @@ import fr.emiko.net.DrawClient;
 import fr.emiko.net.DrawServer;
 import fr.emiko.net.Event;
 import fr.emiko.net.User;
-import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
@@ -25,13 +23,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
 import fr.emiko.graphicsElement.Stroke;
-import javafx.scene.robot.Robot;
 import javafx.scene.transform.Scale;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.json.JSONObject;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -40,7 +36,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HelloController implements Initializable {
+public class DrawController implements Initializable {
     private final Pattern hostPortPattern = Pattern.compile("^([-.a-zA-Z0-9]+)(?::([0-9]{1,5}))?$");
     public Canvas drawingCanvas;
     public MenuItem saveButton;
@@ -309,15 +305,10 @@ public class HelloController implements Initializable {
             if (controller.isOk()) {
                 //drawingCanvas = new Canvas(controller.getCanvasWidth(), controller.getCanvasHeight());
                 //setupCanvas();
-                System.out.println(controller.getCanvasHeight());
-                System.out.println(controller.getCanvasWidth());
+                layerObservableList.clear();
                 drawingCanvas.setWidth(controller.getCanvasWidth());
                 drawingCanvas.setHeight(controller.getCanvasHeight());
-                drawingCanvas.getGraphicsContext2D().setFill(Color.WHITE);
-                drawingCanvas.getGraphicsContext2D().fillRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
-                drawingCanvas.getGraphicsContext2D().fill();
-                pane.setScaleX(1);
-                pane.setScaleY(1);
+                clearDrawingCanvas();
                 client.sendEvent(new Event(Event.ADDCANVAS, new JSONObject().put("width", drawingCanvas.getWidth()).put("height", drawingCanvas.getHeight())));
                 System.out.println("New canvas created");
             }
@@ -431,15 +422,22 @@ public class HelloController implements Initializable {
     }
 
     private void doAddCanvas(JSONObject content) {
+        layerObservableList.clear();
         drawingCanvas.setWidth(content.getDouble("width"));
         drawingCanvas.setHeight(content.getDouble("height"));
+        clearDrawingCanvas();
+
+        setupCanvas(drawingCanvas);
+    }
+
+    private void clearDrawingCanvas() {
         drawingCanvas.getGraphicsContext2D().setFill(Color.WHITE);
         drawingCanvas.getGraphicsContext2D().fillRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
         drawingCanvas.getGraphicsContext2D().fill();
         pane.setScaleX(1);
         pane.setScaleY(1);
-
-        setupCanvas(drawingCanvas);
+        layerObservableList.add(drawingCanvas);
+        layerListView.refresh();
     }
 
     private void doDeleteLine(JSONObject content) {
