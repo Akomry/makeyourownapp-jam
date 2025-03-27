@@ -55,6 +55,8 @@ public class DrawController implements Initializable {
     public ListView<Canvas> layerListView;
     public Button addLayerButton;
     public Button removeLayerButton;
+    public MenuItem aboutMenuItem;
+    public Label statusLabel;
     private double posX = 0;
     private double posY = 0;
     private double mouseX = 0;
@@ -99,6 +101,19 @@ public class DrawController implements Initializable {
         //addLayerButton.setOnAction(this::onActionAddLayer);
         //removeLayerButton.setOnAction(this::onActionRemoveLayer);
         //layerListView.setOnMouseClicked(this::onActionSelectCanvas);
+
+        aboutMenuItem.setOnAction(this::onActionAbout);
+    }
+
+    private void onActionAbout(ActionEvent actionEvent) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("About Yet Another Whiteboard App");
+        alert.setHeaderText(null);
+        alert.setContentText("Hey ! This is my first ever game jam. :D \n" + "I made this in my free time, though a lot of things " +
+                "still don't work. This is basically yet another collaborative whiteboard app, you can host, someone can" +
+                " join, create a canvas and draw lines. For now, it works pretty horrendously; but i'll keep maintaining it " +
+                "and try to make something functional. \nFor now, the layers system doesn't work.");
+        alert.showAndWait();
     }
 
     private void onActionSelectCanvas(MouseEvent mouseEvent) {
@@ -139,6 +154,7 @@ public class DrawController implements Initializable {
 
     private void onActionDisconnect(ActionEvent actionEvent) {
         client.close();
+        statusLabel.setText("Disconnected");
         hostButtonToggle.setSelected(false);
     }
 
@@ -155,7 +171,8 @@ public class DrawController implements Initializable {
                 matcher.matches();
                 String host = matcher.group(1);
                 String port = matcher.group(2);
-                connectClient(host, port == null ? 8090 : Integer.parseInt(port));
+                int finalPort = port == null ? 8090 : Integer.parseInt(port);
+                connectClient(host, finalPort);
                 client.sendEvent(new Event(Event.LINELST, new JSONObject()));
             } catch (NumberFormatException e) {
                 showErrorDialog(e, "Invalid distant address");
@@ -188,6 +205,7 @@ public class DrawController implements Initializable {
         this.client = new DrawClient(host, port, this);
         hostButtonToggle.setSelected(true);
         client.sendAuthEvent(String.valueOf(new Random().nextInt()));
+        statusLabel.setText("Connected to %s:%d".formatted(host, port));
     }
 
     private void showErrorDialog(Exception ex, String context) {
